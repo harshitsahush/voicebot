@@ -6,6 +6,41 @@ window.onload = () => {
 
     // Check for browser compatibility with SpeechRecognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    function fetch_response(query){
+        // will fetch response from api url and return json
+        const url = "/result";
+        const data = {
+            query_text : query
+        };
+
+        fetch(url, {
+            method : "POST",
+            headers : {
+                "Content-Type" : "application/json"
+            },
+            body : JSON.stringify(data)
+        })
+
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            return response.json();
+        })
+
+        .then(data => {
+            console.log(data);
+            console.log(data.response);
+            document.getElementById("response_p").innerText = data.response;
+        })
+
+        .catch(error => {
+            console.log("problem with fetch :", error)
+        });
+    }
+
     
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
@@ -20,6 +55,7 @@ window.onload = () => {
         recognition.onresult = (event) => {
             const temp = event.results[0][0].transcript;
             console.log(temp);
+            var result = fetch_response(temp);
         };
 
         // event handler to restart the recogn when it ends
