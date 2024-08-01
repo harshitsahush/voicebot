@@ -1,5 +1,9 @@
 // Ensure the script runs after the DOM is fully loaded
 window.onload = () => {
+    // to know whether to recall recognition or not
+    var speech_flag = false;         
+
+
     // Check for browser compatibility with SpeechRecognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
@@ -19,11 +23,12 @@ window.onload = () => {
         };
 
         // event handler to restart the recogn when it ends
-        // recognition.onend = () => {
-        //     recognition.start();
-        // };
+        recognition.onend = () => {
+            if(speech_flag){
+                recognition.start();
+            }
+        };
 
-    
         // Event handler for when the recognition service encounters an error
         recognition.onerror = (event) => {
             console.error('Error occurred in recognition: ', event.error);
@@ -31,12 +36,15 @@ window.onload = () => {
     
         // Set up click event handler on the body
         document.querySelector("#start").onclick = () => {
-            console.log("Ready to recognise");
+            console.log("recognition started");
+            speech_flag = true;
             recognition.start();
         };
 
         // stop voice recognition
         document.querySelector("#stop").onclick = () => {
+            console.log("recognition stopped");
+            speech_flag = false;
             recognition.stop();
         }
     }
