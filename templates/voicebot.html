@@ -5,15 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voicebot</title>
     <script src="/static/script.js"></script>
+    <style>
+        .main_container{
+            display: flex;
+            flex-direction: row;
+            margin: auto;
+        }
+
+        .main_container_sec{
+            border: 2px solid black;
+            padding:20px;
+        }
+
+    </style>
 </head>
 <body>
-    <div>
-        <button id="start">Start recogn</button>
-        <button id="stop">Stop recogn</button>
-        <button id="stop_speech">Stop speaking</button>
+    <div class="main_container">
+        <div class="main_container_sec">
+            <form id="upload_form">
+                <input type="file" id="query_file" required>
+                <br><br>
+                <input type="submit">
+            </form>
+            <br>
+            <button id="clear_data">Clear session embeddings</button>
+        </div>
+        <div class="main_container_sec">
+            <div>
+                <button id="start">Start recogn</button>
+                <button id="stop">Stop recogn</button>
+                <button id="stop_speech">Stop speaking</button>
+            </div>
+            <br>
+            <div id="response_p">
+    
+            </div>
+        </div>
     </div>
-    <div id="response_p">
-
-    </div>
+        
 </body>
 </html>

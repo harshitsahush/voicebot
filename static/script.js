@@ -111,7 +111,50 @@ window.onload = () => {
         speakChunk(0);
     }
 
+    // stop the response speech
     document.getElementById("stop_speech").onclick = () => {
         window.speechSynthesis.cancel();
     };
-}; 
+
+    // to process the uploaded file
+    document.getElementById("upload_form").addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const file_input = document.getElementById("query_file");
+        const file = file_input.files[0];
+
+        if(file){
+            // construct form data to send to url
+            const form_data = new FormData();
+            form_data.append("file", file);
+
+            fetch("/process_file",{
+                method : "POST",
+                body : form_data
+            })
+
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                window.alert("File uploaded successfully");
+            })
+
+            .catch(error => {
+                console.error('Error:', error);
+                window.alert("Please upload again.");
+            });
+        }
+        
+        else{
+            window.alert("Please upload a valid file.");
+        }
+    });
+
+    // // remove the stored embeddings for current user
+    // document.getElementById("clear_data").addEventListener("click", function(event) {
+    //     // send a hit to some flask URL that clears data from DB
+        
+    // })
+
+
+};

@@ -1,8 +1,5 @@
 from flask import Flask, request, render_template, redirect, jsonify
-from groq import Groq
-import os
-from dotenv import load_dotenv
-load_dotenv()
+from utils import *
 
 app = Flask(__name__)
 
@@ -13,33 +10,32 @@ def index():
 @app.route("/result", methods = ["GET","POST"])
 def fun1():
     if(request.is_json):
-        data = request.json
-        print(data["query_text"])
-        
-        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-        chat_completion = client.chat.completions.create(
-            messages = [
-                {
-                    "role" : "system",
-                    "content" : """You are a very helpful personal assistant. Respond each query in a warm tone. Answer concisely. Do not provide sentences greater than 20 words in length. Do not assume your own context. If some context is missing, simply tell the user that the question is missing some context."""
-                },
-                {
-                    "role" : "user",
-                    "content" : data["query_text"]
-                }
-            ],
-            model = "llama3-70b-8192",
-            temperature=0.1,
-        )
-
-        data = {"response" : chat_completion.choices[0].message.content}
-        print(data)
+        data = process_query(request.json)
         return jsonify(data)
-        
 
     else:
         return render_template("voicebot.html")
+
+@app.route("/process_file", methods = ["GET","POST"])
+def fun2():
+    if('file' not in request.files):
+        return jsonify({
+            "msg" : "No file"
+        })
+
+    file = request.files['file']
+
+    if(file):
+        process_file(file)
+        return jsonify({
+            "msg" : "File saved successfully"
+        })
+
+    else:
+        return jsonify({
+                "msg" : "No file"
+            })
+
 
 if(__name__ == "__main__"):
     app.run(debug=True)
