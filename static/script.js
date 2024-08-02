@@ -44,13 +44,20 @@ window.onload = () => {
     function speakText(data) {
         // cancel any ongoing speech
         window.speechSynthesis.cancel();
-        
-        // starts speaking the data
-        const utterance = new SpeechSynthesisUtterance(data);
-        utterance.pitch = 0.9;  
-        utterance.rate = 1.2;   
-        window.speechSynthesis.speak(utterance);
-        console.log("Speaking");
+
+        // break the text into chunks since it cant speak the whole text at once
+        const chunks = data.split(/[.!?]+/)
+
+        const speakChunk = (index) => {
+            if (index < chunks.length) {
+                const utterance = new SpeechSynthesisUtterance(chunks[index]);
+                utterance.onend = () => speakChunk(index + 1);
+                window.speechSynthesis.speak(utterance);
+            }
+        };
+    
+        // Start speaking the first chunk
+        speakChunk(0);
     }
 
     
