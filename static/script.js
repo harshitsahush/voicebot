@@ -6,60 +6,6 @@ window.onload = () => {
 
     // Check for browser compatibility with SpeechRecognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    function fetch_response(query){
-        // will fetch response from api url and return json
-        const url = "/result";
-        const data = {
-            query_text : query
-        };
-
-        fetch(url, {
-            method : "POST",
-            headers : {
-                "Content-Type" : "application/json"
-            },
-            body : JSON.stringify(data)
-        })
-
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
-            }
-
-            return response.json();
-        })
-
-        .then(data => {
-            console.log(data);
-            document.getElementById("response_p").innerText = data.response;
-            speakText(data.response);
-        })
-
-        .catch(error => {
-            console.log("problem with fetch :", error)
-        });
-    }
-
-    function speakText(data) {
-        // cancel any ongoing speech
-        window.speechSynthesis.cancel();
-
-        // break the text into chunks since it cant speak the whole text at once
-        const chunks = data.split(/[.!?]+/)
-
-        const speakChunk = (index) => {
-            if (index < chunks.length) {
-                const utterance = new SpeechSynthesisUtterance(chunks[index]);
-                utterance.onend = () => speakChunk(index + 1);
-                window.speechSynthesis.speak(utterance);
-            }
-        };
-    
-        // Start speaking the first chunk
-        speakChunk(0);
-    }
-
     
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
@@ -107,4 +53,65 @@ window.onload = () => {
     else {
         console.log('Speech Recognition API not supported in this browser.');
     }
+
+
+    // fetches response from the flask api
+    function fetch_response(query){
+        // will fetch response from api url and return json
+        const url = "/result";
+        const data = {
+            query_text : query
+        };
+
+        fetch(url, {
+            method : "POST",
+            headers : {
+                "Content-Type" : "application/json"
+            },
+            body : JSON.stringify(data)
+        })
+
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            return response.json();
+        })
+
+        .then(data => {
+            console.log(data);
+            document.getElementById("response_p").innerText = data.response;
+            speakText(data.response);
+        })
+
+        .catch(error => {
+            console.log("problem with fetch :", error)
+        });
+    }
+
+    // speaks the text
+    function speakText(data) {
+        // cancel any ongoing speech
+        window.speechSynthesis.cancel();
+
+        // break the text into chunks since it cant speak the whole text at once
+        const chunks = data.split(/[.!?]+/)
+
+        const speakChunk = (index) => {
+            if (index < chunks.length) {
+                const utterance = new SpeechSynthesisUtterance(chunks[index]);
+                utterance.rate = 1.2;
+                utterance.onend = () => speakChunk(index + 1);
+                window.speechSynthesis.speak(utterance);
+            }
+        };
+    
+        // Start speaking the first chunk
+        speakChunk(0);
+    }
+
+    document.getElementById("stop_speech").onclick = () => {
+        window.speechSynthesis.cancel();
+    };
 }; 
