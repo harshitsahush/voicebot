@@ -32,13 +32,25 @@ window.onload = () => {
 
         .then(data => {
             console.log(data);
-            console.log(data.response);
             document.getElementById("response_p").innerText = data.response;
+            speakText(data.response);
         })
 
         .catch(error => {
             console.log("problem with fetch :", error)
         });
+    }
+
+    function speakText(data) {
+        // cancel any ongoing speech
+        window.speechSynthesis.cancel();
+        
+        // starts speaking the data
+        const utterance = new SpeechSynthesisUtterance(data);
+        utterance.pitch = 0.9;  
+        utterance.rate = 1.2;   
+        window.speechSynthesis.speak(utterance);
+        console.log("Speaking");
     }
 
     

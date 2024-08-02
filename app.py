@@ -22,7 +22,7 @@ def fun1():
             messages = [
                 {
                     "role" : "system",
-                    "content" : """You are a very helpful personal assistant. Respond each query in a warm tone. Do not assume your own context. If some context is missing, simply tell the user that the question is missing some context."""
+                    "content" : """You are a very helpful personal assistant. Respond each query in a warm tone. Answer concisely. Do not assume your own context. If some context is missing, simply tell the user that the question is missing some context."""
                 },
                 {
                     "role" : "user",
