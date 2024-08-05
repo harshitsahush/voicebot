@@ -20,6 +20,7 @@ window.onload = () => {
         recognition.onresult = (event) => {
             const temp = event.results[0][0].transcript;
             console.log(temp);
+            document.getElementById("query_p").innerText = temp;
             fetch_response(temp);
         };
 

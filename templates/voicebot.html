@@ -7,7 +7,9 @@
     <script src="/static/script.js"></script>
     <style>
         body{
-            background-color: rgb(228, 223, 223);
+            /* background-color: rgb(228, 223, 223); */
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
         }
 
         .main_container{
@@ -21,7 +23,9 @@
         .main_container_sec{
             background-color: rgb(179, 177, 177);
             justify-content: center;
+            align-items: center;
             display: flex;
+            flex-direction: column;
             border-radius: 10px;
             padding: 20px;
             margin: 10px;
@@ -70,17 +74,67 @@
             background-color: #df3a5c;
 
         }
+
+        #upload_form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            border-radius: 10px;
+        }
+
+        #query_file {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        #query_file:hover {
+            border-color: #aaa;
+        }
+
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .main_container_sec2{
+            width: 100%;
+            padding:10px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        #query_p{
+            font-size: 20px;
+            font-weight: bold;
+        }
+
     </style>
 </head>
 <body>
     <div class="main_container">
         <div class="main_container_sec">
-            <h1>AI voicebot</h1>
+            <h1>AI VOICEBOT</h1>
         </div>
         <div class="main_container_sec">
             <form id="upload_form">
                 <input type="file" id="query_file" required>
-                <br><br>
                 <input type="submit">
             </form>
         </div>
@@ -90,9 +144,10 @@
                 <button id="stop_speech"></button>
             </div>
         </div>
-        <div id="response_p">
-    
-        </div>
+        <div class="main_container_sec">
+            <div id="query_p" class="main_container_sec2"></div>
+            <div id="response_p" class="main_container_sec2"></div>
+        </div> 
     </div>
         
 </body>
