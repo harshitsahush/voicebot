@@ -6,21 +6,77 @@
     <title>Voicebot</title>
     <script src="/static/script.js"></script>
     <style>
+        body{
+            background-color: rgb(228, 223, 223);
+        }
+
         .main_container{
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             margin: auto;
+            max-width: 600px;
+            padding: 20px;
         }
 
         .main_container_sec{
-            border: 2px solid black;
-            padding:20px;
+            background-color: rgb(179, 177, 177);
+            justify-content: center;
+            display: flex;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px;
         }
 
+
+        button{
+            margin: 20px;
+            border: None;
+            border-radius: 50%;
+            height: 75px;
+            width: 75px;
+            padding: 10px;
+        }
+
+        button:hover{
+            border : 1px solid black;
+        }
+
+        .button_green{
+            background-image: url("static/images/voice.png") ;
+            background-size: 75px 75px;
+            background-repeat: no-repeat;
+            background-position-x: center;
+            background-position-y: center;
+        }
+
+        .button_red{
+            background-image: url("static/images/voice1.png") ;
+            background-size: 75px 75px;
+            background-repeat: no-repeat;
+            background-position-x: center;
+            background-position-y: center;
+        }
+        
+        
+        #stop_speech{
+            background-image: url("static/images/mute.png") ;
+            background-size: 50px 50px;
+            background-repeat: no-repeat;
+            background-position-x: center;
+            background-position-y: center;
+        }
+        
+        #stop_speech:active{
+            background-color: #df3a5c;
+
+        }
     </style>
 </head>
 <body>
     <div class="main_container">
+        <div class="main_container_sec">
+            <h1>AI voicebot</h1>
+        </div>
         <div class="main_container_sec">
             <form id="upload_form">
                 <input type="file" id="query_file" required>
@@ -30,13 +86,12 @@
         </div>
         <div class="main_container_sec">
             <div>
-                <button id="start_stop">Start/Stop recogn</button>
-                <button id="stop_speech">Stop speaking</button>
+                <button id="start_stop" class="button_red"></button>
+                <button id="stop_speech"></button>
             </div>
-            <br>
-            <div id="response_p">
+        </div>
+        <div id="response_p">
     
-            </div>
         </div>
     </div>
         

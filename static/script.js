@@ -40,12 +40,16 @@ window.onload = () => {
             if(speech_flag){
                 speech_flag = false;
                 recognition.stop()
+                // chnage icon
+                document.getElementById("start_stop").className = "button_red"
                 console.log("Recognition stopped!")
             }
 
             else{
                 speech_flag = true;
                 recognition.start();
+                // chnage icon
+                document.getElementById("start_stop").className = "button_green"
                 console.log("recognition started");
             }
         }
@@ -116,6 +120,7 @@ window.onload = () => {
     // stop the response speech
     document.getElementById("stop_speech").onclick = () => {
         window.speechSynthesis.cancel();
+        console.log("Speech stopped!")
     };
 
     // to process the uploaded file

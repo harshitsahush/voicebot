@@ -42,11 +42,11 @@ def process_query(data):
         messages = [
             {
                 "role" : "system",
-                "content" : """You are a very helpful personal assistant. You're given context and chat history consisting of last 3 user queries and reponses in decreasing order. Find the context from the given context and chat history and then answer the given query appropriately. Answer concisely. Do not provide sentences greater than 20 words in length. Do not assume your own context. If some context is missing, simply tell the user that the question is missing some context."""
+                "content" : """You are a personal assistant AI designed to help users by answering their queries accurately and efficiently. You will be provided with a user query, relevant context, and chat history. Your task is to respond to the user's query by utilizing the provided context and chat history to ensure a VERY concise and relevant answer. Be clear, concise, and ensure your response aligns with the user's needs and the given information."""
             },
             {
                 "role" : "user",
-                "content" : f"""{query} \n Context : {context} \n Chat history : {t}"""
+                "content" : f"""User Query : {query} \n Context : {context} \n Chat history : {t}"""
             }
         ],
         model = "llama3-70b-8192",
@@ -74,7 +74,7 @@ def process_file(file):
 
 def create_chunks(text):
     # recursive chunking
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap = 100)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size = 500, chunk_overlap = 100)
     chunks = text_splitter.split_text(text)
     return chunks
 
@@ -106,7 +106,7 @@ def save_in_db(query, response):
 def fetch_chat_history():
     cursor = conn.cursor()
     cursor.execute(
-        """SELECT * FROM convo_data WHERE uid == (?) ORDER BY time DESC LIMIT 3""",
+        """SELECT * FROM convo_data WHERE uid == (?) ORDER BY time DESC LIMIT 5""",
         (session["uid"],)               #in case of single element, comma is necessary
     )
     temp = cursor.fetchall()
