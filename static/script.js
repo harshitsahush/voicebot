@@ -20,7 +20,7 @@ window.onload = () => {
         recognition.onresult = (event) => {
             const temp = event.results[0][0].transcript;
             console.log(temp);
-            var result = fetch_response(temp);
+            fetch_response(temp);
         };
 
         // event handler to restart the recogn when it ends
@@ -34,20 +34,22 @@ window.onload = () => {
         recognition.onerror = (event) => {
             console.error('Error occurred in recognition: ', event.error);
         };
-    
-        // Set up click event handler on the body
-        document.querySelector("#start").onclick = () => {
-            console.log("recognition started");
-            speech_flag = true;
-            recognition.start();
-        };
 
-        // stop voice recognition
-        document.querySelector("#stop").onclick = () => {
-            console.log("recognition stopped");
-            speech_flag = false;
-            recognition.stop();
+        // to start and stop speech recogn
+        document.getElementById("start_stop").onclick = () => {
+            if(speech_flag){
+                speech_flag = false;
+                recognition.stop()
+                console.log("Recognition stopped!")
+            }
+
+            else{
+                speech_flag = true;
+                recognition.start();
+                console.log("recognition started");
+            }
         }
+    
     }
 
     else {
@@ -55,7 +57,7 @@ window.onload = () => {
     }
 
 
-    // fetches response from the flask api
+    // fetches response from the flask api and write it in the paragraph
     function fetch_response(query){
         // will fetch response from api url and return json
         const url = "/result";
@@ -149,12 +151,6 @@ window.onload = () => {
             window.alert("Please upload a valid file.");
         }
     });
-
-    // // remove the stored embeddings for current user
-    // document.getElementById("clear_data").addEventListener("click", function(event) {
-    //     // send a hit to some flask URL that clears data from DB
-        
-    // })
 
 
 };
