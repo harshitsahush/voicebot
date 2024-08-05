@@ -9,16 +9,19 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 import glob
+import sqlite3
 
 load_dotenv()
 
+conn = sqlite3.connect("convo_data", check_same_thread=False)
+
 def process_query(data):
-    data = data["query_text"]   
+    query = data["query_text"]   
 
 
     # get similar docs from faiss_db
     if(glob.glob(session["uid"])):
-        context = sim_search(data)
+        context = sim_search(query)
     else:
         context = ""
     
@@ -32,7 +35,7 @@ def process_query(data):
             },
             {
                 "role" : "user",
-                "content" : data + "\n\nContext: \n" + context
+                "content" : query + "\n\nContext: \n" + context
             }
         ],
         model = "llama3-70b-8192",
@@ -40,6 +43,9 @@ def process_query(data):
     )
 
     data = {"response" : chat_completion.choices[0].message.content}
+
+    #save message in db
+    save_in_db(query, data["response"])
     return data
 
 def process_file(file):
@@ -74,3 +80,17 @@ def sim_search(query):
     for i in range(min(5, len(docs))):
         context += docs[i].page_content
     return context
+
+def save_in_db(query, response):
+    cursor = conn.cursor()
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS convo_data (uid TEXT, query TEXT, response TEXT)"""
+    )
+    
+    cursor.execute(
+        """INSERT INTO convo_data (uid, query, response) VALUES (?,?,?)""",
+        (session["uid"], query, response)
+    )
+    conn.commit()
+
+    print("message saved")
