@@ -10,10 +10,17 @@ from langchain_community.vectorstores import FAISS
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 import glob
 import sqlite3
+import datetime
 
 load_dotenv()
 
 conn = sqlite3.connect("convo_data", check_same_thread=False)
+cursor = conn.cursor()
+cursor.execute(
+    """CREATE TABLE IF NOT EXISTS convo_data (uid TEXT, query TEXT, response TEXT, time TIMESTAMP)"""
+)
+conn.commit()
+
 
 def process_query(data):
     query = data["query_text"]   
@@ -24,6 +31,10 @@ def process_query(data):
         context = sim_search(query)
     else:
         context = ""
+
+    #fetch last 3 messages from db, for chat history
+    t = fetch_chat_history()
+
     
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -31,11 +42,11 @@ def process_query(data):
         messages = [
             {
                 "role" : "system",
-                "content" : """You are a very helpful personal assistant. Respond each query ONLY from the given context. Answer concisely. Do not provide sentences greater than 20 words in length. Do not assume your own context. If some context is missing, simply tell the user that the question is missing some context."""
+                "content" : """You are a very helpful personal assistant. You're given context and chat history consisting of last 3 user queries and reponses in decreasing order. Find the context from the given context and chat history and then answer the given query appropriately. Answer concisely. Do not provide sentences greater than 20 words in length. Do not assume your own context. If some context is missing, simply tell the user that the question is missing some context."""
             },
             {
                 "role" : "user",
-                "content" : query + "\n\nContext: \n" + context
+                "content" : f"""{query} \n Context : {context} \n Chat history : {t}"""
             }
         ],
         model = "llama3-70b-8192",
@@ -82,15 +93,29 @@ def sim_search(query):
     return context
 
 def save_in_db(query, response):
+    currentDateTime = datetime.datetime.now()
     cursor = conn.cursor()
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS convo_data (uid TEXT, query TEXT, response TEXT)"""
-    )
     
     cursor.execute(
-        """INSERT INTO convo_data (uid, query, response) VALUES (?,?,?)""",
-        (session["uid"], query, response)
+        """INSERT INTO convo_data (uid, query, response, time) VALUES (?,?,?,?)""",
+        (session["uid"], query, response, currentDateTime)
     )
     conn.commit()
-
     print("message saved")
+
+def fetch_chat_history():
+    cursor = conn.cursor()
+    cursor.execute(
+        """SELECT * FROM convo_data WHERE uid == (?) ORDER BY time DESC LIMIT 3""",
+        (session["uid"],)               #in case of single element, comma is necessary
+    )
+    temp = cursor.fetchall()
+    conn.commit()
+    
+    t = """"""
+    for ele in temp:
+        ele = list(ele)
+        t += f"Query : {ele[1]} \n Response : {ele[2]} \n\n"
+    
+    print(t)
+    return t
