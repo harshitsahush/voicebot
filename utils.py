@@ -1,4 +1,7 @@
 from groq import Groq
+from flask import Flask, request, render_template, redirect, jsonify, session
+from flask_session import Session
+import uuid
 import os
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
@@ -14,7 +17,7 @@ def process_query(data):
 
 
     # get similar docs from faiss_db
-    if(glob.glob("faiss_db")):
+    if(glob.glob(session["uid"])):
         context = sim_search(data)
     else:
         context = ""
@@ -61,10 +64,10 @@ def create_chunks(text):
 def create_store_embeds(chunks):
     embeddings = HuggingFaceEmbeddings()
     db = FAISS.from_texts(chunks, embeddings)
-    db.save_local("faiss_db")
+    db.save_local(session["uid"])
 
 def sim_search(query):
-    db = FAISS.load_local("faiss_db", HuggingFaceEmbeddings(), allow_dangerous_deserialization=True)
+    db = FAISS.load_local(session["uid"], HuggingFaceEmbeddings(), allow_dangerous_deserialization=True)
     docs = db.similarity_search(query)
 
     context = ""

@@ -1,20 +1,33 @@
-from flask import Flask, request, render_template, redirect, jsonify
 from utils import *
 
+
 app = Flask(__name__)
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SECRET_KEY"] = "dev"
+Session()
+
 
 @app.route("/", methods = ["GET", "POST"])
 def index():
     return redirect("/result")
 
+
 @app.route("/result", methods = ["GET","POST"])
 def fun1():
     if(request.is_json):
+        if("uid" not in session):
+            session["uid"] = str(uuid.uuid4())
+
         data = process_query(request.json)
         return jsonify(data)
 
     else:
+        if("uid" not in session):
+            session["uid"] = str(uuid.uuid4())
+
         return render_template("voicebot.html")
+
 
 @app.route("/process_file", methods = ["GET","POST"])
 def fun2():
