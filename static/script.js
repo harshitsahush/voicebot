@@ -35,6 +35,12 @@ window.onload = () => {
         recognition.onerror = (event) => {
             console.error('Error occurred in recognition: ', event.error);
         };
+        
+        // when human speech is detected, stop the speakign function
+        recognition.onspeechstart = () => {
+            window.speechSynthesis.cancel();
+            console.log("Speech stopped!")
+        };
 
         // to start and stop speech recogn
         document.getElementById("start_stop").onclick = () => {
