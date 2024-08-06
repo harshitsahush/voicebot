@@ -11,6 +11,8 @@ from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 import glob
 import sqlite3
 import datetime
+from langchain_community.vectorstores import Redis
+import redis
 
 load_dotenv()
 
@@ -26,11 +28,14 @@ def process_query(data):
     query = data["query_text"]   
 
 
-    # get similar docs from faiss_db
-    if(glob.glob(session["uid"])):
-        context = sim_search(query)
-    else:
+    # get similar docs from redis
+    client = redis.Redis(host='localhost', port=6379, db=0)
+    key = session["uid"]
+    if client.exists(key):
         context = ""
+    else:
+        context = sim_search(query)
+    
 
     #fetch last 3 messages from db, for chat history
     t = fetch_chat_history()
@@ -80,12 +85,23 @@ def create_chunks(text):
 
 def create_store_embeds(chunks):
     embeddings = HuggingFaceEmbeddings()
-    db = FAISS.from_texts(chunks, embeddings)
-    db.save_local(session["uid"])
+    rdb = Redis.from_texts(
+        chunks,
+        embeddings,
+        redis_url = os.getenv("REDIS_DB_URL"),
+        index_name = session["uid"]
+    )
+    rdb.write_schema("redis_schema.yaml")
 
 def sim_search(query):
-    db = FAISS.load_local(session["uid"], HuggingFaceEmbeddings(), allow_dangerous_deserialization=True)
-    docs = db.similarity_search(query)
+    new_rds = Redis.from_existing_index(
+        HuggingFaceEmbeddings(),
+        index_name=session["uid"],
+        redis_url = os.getenv("REDIS_DB_URL"),
+        schema="redis_schema.yaml"
+    )
+
+    docs = new_rds.similarity_search(query)
 
     context = ""
     for i in range(min(5, len(docs))):
