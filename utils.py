@@ -16,26 +16,15 @@ import redis
 
 load_dotenv()
 
-conn = sqlite3.connect("convo_data", check_same_thread=False)
-cursor = conn.cursor()
-cursor.execute(
-    """CREATE TABLE IF NOT EXISTS convo_data (uid TEXT, query TEXT, response TEXT, time TIMESTAMP)"""
-)
-conn.commit()
+#db1 will be used to store client conversation  {iser_id : [[query, response], [q, r],....]}
+client = redis.Redis(host='localhost', port=6379, db=1)
 
 
 def process_query(data):
     query = data["query_text"]   
 
-
-    # get similar docs from redis
-    client = redis.Redis(host='localhost', port=6379, db=0)
-    key = session["uid"]
-    if client.exists(key):
-        context = ""
-    else:
-        context = sim_search(query)
-    
+    #fetch sim_docs
+    context = sim_search(query)        
 
     #fetch last 3 messages from db, for chat history
     t = fetch_chat_history()
@@ -94,44 +83,35 @@ def create_store_embeds(chunks):
     rdb.write_schema("redis_schema.yaml")
 
 def sim_search(query):
-    new_rds = Redis.from_existing_index(
-        HuggingFaceEmbeddings(),
-        index_name=session["uid"],
-        redis_url = os.getenv("REDIS_DB_URL"),
-        schema="redis_schema.yaml"
-    )
+    try:
+        new_rds = Redis.from_existing_index(
+            HuggingFaceEmbeddings(),
+            index_name=session["uid"],
+            redis_url = os.getenv("REDIS_DB_URL"),
+            schema="redis_schema.yaml"
+        )
+        docs = new_rds.similarity_search(query)
 
-    docs = new_rds.similarity_search(query)
-
-    context = ""
-    for i in range(min(5, len(docs))):
-        context += docs[i].page_content
-    return context
+        context = ""
+        for i in range(min(5, len(docs))):
+            context += docs[i].page_content
+        
+        return context
+    
+    except:
+        return ""
 
 def save_in_db(query, response):
-    currentDateTime = datetime.datetime.now()
-    cursor = conn.cursor()
-    
-    cursor.execute(
-        """INSERT INTO convo_data (uid, query, response, time) VALUES (?,?,?,?)""",
-        (session["uid"], query, response, currentDateTime)
-    )
-    conn.commit()
-    print("message saved")
+    #no need for time, since message will always be added at the end
+    client.rpush(session["uid"], f"Query : {query} \n Response : {response}\n")
 
 def fetch_chat_history():
-    cursor = conn.cursor()
-    cursor.execute(
-        """SELECT * FROM convo_data WHERE uid == (?) ORDER BY time DESC LIMIT 5""",
-        (session["uid"],)               #in case of single element, comma is necessary
-    )
-    temp = cursor.fetchall()
-    conn.commit()
-    
-    t = """"""
-    for ele in temp:
-        ele = list(ele)
-        t += f"Query : {ele[1]} \n Response : {ele[2]} \n\n"
-    
-    print(t)
-    return t
+    if(client.exists(session["uid"])):
+        t = ""
+        temp = client.lrange(session["uid"], 0, -1)
+        for i in range(len(temp)-1, max(-1, len(temp)-1-6), -1):
+            t += temp[i].decode("utf-8")
+        return t
+    else:
+        print("No history yet")
+        return ""
