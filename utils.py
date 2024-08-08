@@ -6,27 +6,32 @@ import os
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+from sentence_transformers import SentenceTransformer
 from langchain_community.vectorstores import Redis
 import redis
+from redis.commands.search import Search
 from datetime import datetime
+import glob
+from langchain_community.vectorstores import FAISS
 
 load_dotenv()
 
-#db1 will be used to store client conversation  {iser_id : [[query, response], [q, r],....]}
-client = redis.Redis(host='localhost', port=6379, db=1)
+#db0 will be used to store client conversation  {iser_id : [[query, response], [q, r],....]}
+client0 = redis.Redis(host='localhost', port=6379, db=0)
 
 
 def process_query(data):
-    query = data["query_text"]   
+    query = data["query_text"]  
 
-    #fetch sim_docs
-    context = sim_search(query)        
+    # get similar docs from faiss_db
+    if(glob.glob(session["uid"])):
+        context = sim_search(query)
+    else:
+        context = ""  
 
     #fetch last 3 messages from db, for chat history
     t = fetch_chat_history()
-
     
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -44,7 +49,6 @@ def process_query(data):
         model = "llama3-70b-8192",
         temperature=0.1,
     )
-
     data = {"response" : chat_completion.choices[0].message.content}
 
     #save message in db
@@ -70,47 +74,32 @@ def process_file(file):
 
 def create_chunks(text):
     # recursive chunking
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size = 10000, chunk_overlap = 1000)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap = 100)
     chunks = text_splitter.split_text(text)
     return chunks
 
 def create_store_embeds(chunks):
-    rdb = Redis.from_texts(
-        chunks,
-        HuggingFaceEmbeddings(),
-        redis_url = os.getenv("REDIS_DB_URL"),
-        index_name = session["uid"]
-    )
-
-    rdb.write_schema("redis_schema.yaml")
+    embeddings = HuggingFaceEmbeddings()
+    db = FAISS.from_texts(chunks, embeddings)
+    db.save_local(session["uid"])
 
 def sim_search(query):
-    try:
-        new_rds = Redis.from_existing_index(
-            HuggingFaceEmbeddings(),
-            index_name=session["uid"],
-            redis_url = os.getenv("REDIS_DB_URL"),
-            schema="redis_schema.yaml"
-        )
-        docs = new_rds.similarity_search(query)
+    db = FAISS.load_local(session["uid"], HuggingFaceEmbeddings(), allow_dangerous_deserialization=True)
+    docs = db.similarity_search(query)
 
-        context = ""
-        for i in range(min(5, len(docs))):
-            context += docs[i].page_content
-        
-        return context
-    
-    except:
-        return ""
+    context = ""
+    for i in range(min(3, len(docs))):
+        context += docs[i].page_content
+    return context
 
 def save_in_db(query, response):
     #no need for time, since message will always be added at the end
-    client.rpush(session["uid"], f"Query : {query} \n Response : {response}\n")
+    client0.rpush(session["uid"], f"Query : {query} \n Response : {response}\n")
 
 def fetch_chat_history():
-    if(client.exists(session["uid"])):
+    if(client0.exists(session["uid"])):
         t = ""
-        temp = client.lrange(session["uid"], 0, -1)
+        temp = client0.lrange(session["uid"], 0, -1)
         for i in range(len(temp)-1, max(-1, len(temp)-1-6), -1):
             t += temp[i].decode("utf-8")
         return t
