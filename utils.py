@@ -8,11 +8,9 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-import glob
-import sqlite3
-import datetime
 from langchain_community.vectorstores import Redis
 import redis
+from datetime import datetime
 
 load_dotenv()
 
@@ -59,27 +57,31 @@ def process_file(file):
     text = ""
     for page in pdfReader.pages:
         text += page.extract_text()
-    
+        
     #chunking
     chunks = create_chunks(text)
+    print(str(datetime.now()))
 
     #create and store embeddings
     create_store_embeds(chunks)
 
+    print("storing in db----")
+    print(str(datetime.now()))
+
 def create_chunks(text):
     # recursive chunking
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size = 500, chunk_overlap = 100)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size = 10000, chunk_overlap = 1000)
     chunks = text_splitter.split_text(text)
     return chunks
 
 def create_store_embeds(chunks):
-    embeddings = HuggingFaceEmbeddings()
     rdb = Redis.from_texts(
         chunks,
-        embeddings,
+        HuggingFaceEmbeddings(),
         redis_url = os.getenv("REDIS_DB_URL"),
         index_name = session["uid"]
     )
+
     rdb.write_schema("redis_schema.yaml")
 
 def sim_search(query):
