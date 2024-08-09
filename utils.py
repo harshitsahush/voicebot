@@ -51,7 +51,7 @@ def process_query(data):
         messages = [
             {
                 "role" : "system",
-                "content" : """You are a personal assistant AI designed to help users by answering their queries accurately and efficiently. You will be provided with a user query, relevant context, and chat history. Your task is to respond to the user's query by utilizing the provided context and chat history to ensure a VERY concise and relevant answer. Be clear, concise, and ensure your response aligns with the user's needs and the given information."""
+                "content" : """You are a personal VOICE assistant AI designed to help users by answering their queries accurately and efficiently. You will be provided with a user query, relevant context, and chat history. Your task is to respond to the user's query by utilizing the provided context and chat history to ensure a VERY concise and relevant answer. Be clear, concise, and ensure your response aligns with the user's needs and the given information. If something is not present in the given context, respond that no cotext has been provided. DO NOT give answers from outside the context"""
             },
             {
                 "role" : "user",
@@ -64,7 +64,7 @@ def process_query(data):
     data = {"response" : chat_completion.choices[0].message.content}
 
 
-    print("Grow call")
+    print("Groq call")
     print(datetime.now())
 
     #save message in db
