@@ -22,6 +22,8 @@ client0 = redis.Redis(host='localhost', port=6379, db=0)
 
 
 def process_query(data):
+    print(datetime.now())
+    
     query = data["query_text"]  
 
     # get similar docs from faiss_db
@@ -30,8 +32,18 @@ def process_query(data):
     else:
         context = ""  
 
+
+    print("Sim search")
+    print(datetime.now())
+
+
     #fetch last 3 messages from db, for chat history
     t = fetch_chat_history()
+
+
+    print("fetch chat history")
+    print(datetime.now())
+
     
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -51,26 +63,40 @@ def process_query(data):
     )
     data = {"response" : chat_completion.choices[0].message.content}
 
+
+    print("Grow call")
+    print(datetime.now())
+
     #save message in db
     save_in_db(query, data["response"])
+
+    print("Save msg in db")
+    print(datetime.now())
+
     return data
 
 def process_file(file):
+    print(datetime.now())
     pdfReader = PdfReader(file)
 
     text = ""
     for page in pdfReader.pages:
         text += page.extract_text()
+    
+    print("Text extraction")
+    print(datetime.now())
         
     #chunking
     chunks = create_chunks(text)
-    print(str(datetime.now()))
+
+    print("chunking")
+    print(datetime.now())
 
     #create and store embeddings
     create_store_embeds(chunks)
 
-    print("storing in db----")
-    print(str(datetime.now()))
+    print("storing vectors in db----")
+    print(datetime.now())
 
 def create_chunks(text):
     # recursive chunking
@@ -85,10 +111,10 @@ def create_store_embeds(chunks):
 
 def sim_search(query):
     db = FAISS.load_local(session["uid"], HuggingFaceEmbeddings(), allow_dangerous_deserialization=True)
-    docs = db.similarity_search(query)
+    docs = db.similarity_search(query, k=3)
 
     context = ""
-    for i in range(min(3, len(docs))):
+    for i in range(len(docs)):
         context += docs[i].page_content
     return context
 
@@ -104,5 +130,4 @@ def fetch_chat_history():
             t += temp[i].decode("utf-8")
         return t
     else:
-        print("No history yet")
         return ""
