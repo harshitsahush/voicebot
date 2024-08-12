@@ -118,11 +118,15 @@ function speech_recog() {
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    recognition.start()
+    recognition.start();
+    console.log("recognition start");
+    var speech_recognized_flag = false;             // if no speech is recognized, start speech recogntion again
 
     recognition.onresult = (event) => {
         const temp = event.results[0][0].transcript;
         console.log(temp);
+        speech_recognized_flag = true;
+
         document.getElementById("query_p").innerText = temp;
         fetch_response(temp);
         document.getElementById("start_stop").className = "button_red";
@@ -133,6 +137,13 @@ function speech_recog() {
         console.error('Error occurred in recognition: ', event.error);
         document.getElementById("start_stop").className = "button_red";
     };
+
+    recognition.onend = () => {
+        console.log("recognition end")
+        if(speech_recognized_flag == false){
+            speech_recog();
+        }
+    }
 }
 
 
