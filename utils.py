@@ -14,64 +14,31 @@ from redis.commands.search import Search
 from datetime import datetime
 import glob
 from langchain_community.vectorstores import FAISS
+from load_crew import *
 
 load_dotenv()
 
-#db0 will be used to store client conversation  {iser_id : [[query, response], [q, r],....]}
+#db0 will be used to store client conversation  {user_id : [[query, response], [q, r],....]}
 client0 = redis.Redis(host='localhost', port=6379, db=0)
 
 
-def process_query(data):
-    print(datetime.now())
-    
-    query = data["query_text"]  
+def process_query(data):    
+    query = data["query_text"]
 
-    # get similar docs from faiss_db
-    if(glob.glob(session["uid"])):
-        context = sim_search(query)
-    else:
-        context = ""  
-
-
-    print("Sim search")
-    print(datetime.now())
-
-
-    #fetch last 3 messages from db, for chat history
+    # fetch last 3 messages from db, for chat history
     t = fetch_chat_history()
-
-
-    print("fetch chat history")
-    print(datetime.now())
-
     
-    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    user_input = {
+        "query" : f"Query : {query} \n Chat History : {t}"
+    }
 
-    chat_completion = client.chat.completions.create(
-        messages = [
-            {
-                "role" : "system",
-                "content" : """You are a personal VOICE assistant AI designed to help users by answering their queries accurately and efficiently. You will be provided with a user query, relevant context, and chat history. Your task is to respond to the user's query by utilizing the provided context and chat history to ensure a VERY concise and relevant answer. Be clear, concise, and ensure your response aligns with the user's needs and the given information. If something is not present in the given context, respond that no cotext has been provided. DO NOT give answers from outside the context"""
-            },
-            {
-                "role" : "user",
-                "content" : f"""User Query : {query} \n Context : {context} \n Chat history : {t}"""
-            }
-        ],
-        model = "llama3-70b-8192",
-        temperature=0.1,
-    )
-    data = {"response" : chat_completion.choices[0].message.content}
-
-
-    print("Groq call")
-    print(datetime.now())
+    result = crew.kickoff(inputs=user_input)
+    
+    #create json to resturn to js
+    data = {"response" : str(result)}
 
     #save message in db
     save_in_db(query, data["response"])
-
-    print("Save msg in db")
-    print(datetime.now())
 
     return data
 
